@@ -1,0 +1,10 @@
+{
+    "groups": [
+        {
+            "name": "Dev",
+            "shortcuts": [
+                {"name": "VSCode", "path": "C:\\caminho\\para\\Code.exe"}
+            ]
+        }
+    ]
+}

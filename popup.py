@@ -1,7 +1,7 @@
 # popup.py
 import subprocess
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout,
-                                QPushButton, QLabel, QApplication)
+                                QPushButton, QLabel, QApplication, QGridLayout)
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QCursor, QIcon
 
@@ -9,7 +9,7 @@ from winapi import get_taskbar_rect, extract_icon
 from config import get_groups
 
 PADDING      = 8
-MARGIN       = 8
+MARGIN       = 0
 HEADER_HEIGHT = 22
 CAT_HEIGHT   = 28
 ICON_SIZE    = 38
@@ -28,7 +28,7 @@ class PopupLauncher(QWidget):
         super().__init__()
         self._groups = get_groups()
         self._active = 0
-        self._icon_buttons = []
+        self._icon_buttons = QGridLayout()
         self._setup_window()
         self._build_ui()
         self._position()
@@ -42,17 +42,18 @@ class PopupLauncher(QWidget):
         self.setStyleSheet(f"background-color: {POPUP_BG}; border-radius: 8px;")
 
     def _build_ui(self):
-        self._root = QVBoxLayout()
+        self._root = QGridLayout()
         self._root.setContentsMargins(0, 0, 0, 0)
         self._root.setSpacing(0)
 
         self._root.addWidget(self._build_header())
         self._root.addWidget(self._build_categories())
 
-        self._icons_row = QHBoxLayout()
+        self._icons_container = QWidget()
+        self._icons_row = QGridLayout(self._icons_container)
         self._icons_row.setContentsMargins(PADDING, PADDING, PADDING, PADDING)
         self._icons_row.setSpacing(6)
-        self._root.addLayout(self._icons_row)
+        self._root.addWidget(self._icons_container)
 
         self.setLayout(self._root)
         self._load_icons(0)
@@ -63,8 +64,8 @@ class PopupLauncher(QWidget):
         header.setFixedHeight(HEADER_HEIGHT)
         header.setStyleSheet(f"""
             background-color: {HEADER_BG};
-            border-top-left-radius: 8px;
-            border-top-right-radius: 8px;
+            border-top-left-radius: 5px;
+            border-top-right-radius: 5px;
         """)
 
         layout = QHBoxLayout(header)
@@ -128,13 +129,18 @@ class PopupLauncher(QWidget):
         self.adjustSize()
 
     def _load_icons(self, group_index: int):
-        # limpa ícones anteriores
         while self._icons_row.count():
             item = self._icons_row.takeAt(0)
             if item.widget():
                 item.widget().deleteLater()
 
+        if not self._groups:
+            return        
+        
         shortcuts = self._groups[group_index].get("shortcuts", [])
+        
+        MAX_COLS = 6
+        row = col = 0
 
         for shortcut in shortcuts:
             btn = QPushButton()
@@ -173,7 +179,12 @@ class PopupLauncher(QWidget):
                 """)
 
             btn.clicked.connect(lambda checked, p=shortcut["path"]: self._launch(p))
-            self._icons_row.addWidget(btn)
+            self._icons_row.addWidget(btn, row, col)
+            
+            col += 1
+            if col >= MAX_COLS:
+                col = 0
+                row += 1
 
     def _launch(self, path: str):
         subprocess.Popen(path)
@@ -211,6 +222,5 @@ class PopupLauncher(QWidget):
         self.move(x, y)
 
     def closeEvent(self, event):
-        if not getattr(self, '_cfg', None) or not self._cfg.isVisible():
-            QApplication.instance().quit()
-        super().closeEvent(event)
+        # naum mata o app - daemon continua rodando
+        event.accept()

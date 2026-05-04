@@ -106,3 +106,6 @@ def is_already_running(name: str) -> bool:
     ERROR_ALREADY_EXISTS = 183
     handle = create_mutex(name)
     return ctypes.windll.kernel32.GetLastError() == ERROR_ALREADY_EXISTS
+
+def set_app_user_model_id(app_id: str) -> None:
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(app_id)

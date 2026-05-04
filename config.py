@@ -1,10 +1,16 @@
 # config.py
+import sys
 import json
 from pathlib import Path
 
-CONFIG_FILE = Path(__file__).parent / "config.json"
-
 DEFAULT_CONFIG = {"groups": []}
+
+def _base_path() -> Path:
+    if getattr(sys, 'frozen', False):
+        # rodando como .exe empacotado
+        return Path(sys.executable).parent
+    # rodando como script
+    return Path(__file__).parent
 
 def load_config() -> dict:
     if not CONFIG_FILE.exists():
@@ -39,3 +45,5 @@ def remove_shortcut(group_index: int, shortcut_index: int) -> None:
     config = load_config()
     config["groups"][group_index]["shortcuts"].pop(shortcut_index)
     save_config(config)
+
+CONFIG_FILE = _base_path() / "config.json" # Path(__file__).parent / "config.json"

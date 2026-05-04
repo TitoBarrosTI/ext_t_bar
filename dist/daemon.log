@@ -1,0 +1,13 @@
+DEBUG:root:daemon escutando
+DEBUG:root:sinal recebido, emitindo show_popup
+DEBUG:root:_show_popup chamado
+DEBUG:root:popup criado
+DEBUG:root:popup mostrado
+DEBUG:root:sinal recebido, emitindo show_popup
+DEBUG:root:_show_popup chamado
+DEBUG:root:popup criado
+DEBUG:root:popup mostrado
+DEBUG:root:sinal recebido, emitindo show_popup
+DEBUG:root:_show_popup chamado
+DEBUG:root:popup criado
+DEBUG:root:popup mostrado

@@ -1,4 +1,5 @@
 # config_window.py
+from pathlib import Path
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout,
                                 QPushButton, QListWidget, QListWidgetItem,
                                 QFileDialog, QLineEdit, QLabel,
@@ -168,6 +169,9 @@ class ConfigWindow(QWidget):
         )
         if path:
             self._input_path.setText(path)
+            if not self._input_name.text().strip():
+                name = Path(path).stem
+                self._input_name.setText(name)
 
     def _add_shortcut(self):
         name = self._input_name.text().strip()
@@ -226,6 +230,9 @@ class ConfigWindow(QWidget):
             }}
         """
 
+    # def closeEvent(self, event):
+    #     QApplication.instance().quit()
+    #     super().closeEvent(event)
+
     def closeEvent(self, event):
-        QApplication.instance().quit()
-        super().closeEvent(event)
+        event.accept()

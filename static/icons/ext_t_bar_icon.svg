@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <rect x="0" y="0" width="200" height="200" rx="34" fill="#1a1a2e"/>
+  <!-- barra taskbar -->
+  <rect x="10" y="162" width="180" height="20" rx="7" fill="#3a3a4a"/>
+  <!-- linha de cima - claros -->
+  <rect x="16" y="16" width="50" height="50" rx="9" fill="#4f8ef7"/>
+  <rect x="75" y="16" width="50" height="50" rx="9" fill="#4f8ef7"/>
+  <rect x="134" y="16" width="50" height="50" rx="9" fill="#4f8ef7"/>
+  <!-- linha de baixo - escuros -->
+  <rect x="16" y="74" width="50" height="50" rx="9" fill="#4f8ef7" opacity="0.35"/>
+  <rect x="75" y="74" width="50" height="50" rx="9" fill="#4f8ef7" opacity="0.35"/>
+  <rect x="134" y="74" width="50" height="50" rx="9" fill="#4f8ef7" opacity="0.35"/>
+  <!-- sinal + no inferior direito -->
+  <text x="159" y="107" text-anchor="middle" fill="#8ab4f8" font-size="30" font-family="sans-serif" font-weight="400">+</text>
+  <!-- barra fina separadora -->
+  <rect x="10" y="130" width="180" height="3" rx="1" fill="#4f8ef7" opacity="0.25"/>
+</svg>

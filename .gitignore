@@ -1,7 +1,12 @@
+# PyInstaller
+build/
+dist/
+*.spec
+
 .venv/
 __pycache__/
 *.pyc
 *.log
-dist/
+
 config.json
 mensagem.txt

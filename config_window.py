@@ -230,9 +230,5 @@ class ConfigWindow(QWidget):
             }}
         """
 
-    # def closeEvent(self, event):
-    #     QApplication.instance().quit()
-    #     super().closeEvent(event)
-
     def closeEvent(self, event):
         event.accept()

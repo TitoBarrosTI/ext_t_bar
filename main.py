@@ -1,30 +1,6 @@
-# # main.py
-# import sys
-# from PySide6.QtWidgets import QApplication
-# from popup import PopupLauncher
-# from winapi import is_already_running, set_app_user_model_id
-
-# MUTEX_NAME = "TaskbarLauncher_SingleInstance"
-
-# if is_already_running(MUTEX_NAME):
-#     sys.exit(0)
-
-# set_app_user_model_id("TitoBarrosTI.ExtTBar")
-
-# MUTEX_NAME = "ExtTBar_SingleInstance"
-
-# app = QApplication(sys.argv)
-
-# from PySide6.QtWidgets import QApplication, QWidget
-
-# window = PopupLauncher()
-# window.show()
-# window.raise_()
-# window.activateWindow()
-# sys.exit(app.exec())
-
-# main.py
 import logging
+
+from setup import run_setup
 logging.basicConfig(filename="main.log", level=logging.DEBUG)
 
 import sys
@@ -52,6 +28,8 @@ def _start_daemon():
         )
 
 def main():
+    run_setup()
+    
     # tenta conectar primeiro
     logging.debug("main iniciando")
     try:

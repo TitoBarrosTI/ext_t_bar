@@ -46,4 +46,9 @@ def remove_shortcut(group_index: int, shortcut_index: int) -> None:
     config["groups"][group_index]["shortcuts"].pop(shortcut_index)
     save_config(config)
 
+def update_shortcut(group_index: int, shortcut_index: int, name: str, path: str) -> None:
+    config = load_config()
+    config["groups"][group_index]["shortcuts"][shortcut_index] = {"name": name, "path": path}
+    save_config(config)
+
 CONFIG_FILE = _base_path() / "config.json" # Path(__file__).parent / "config.json"

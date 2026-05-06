@@ -14,7 +14,6 @@ PORT = 59871
 
 def _start_daemon():
     if getattr(sys, 'frozen', False):
-        # daemon = Path(sys.executable).parent / "Ext_T_Bar_daemon.exe"
         daemon = Path(sys.executable).parent / "daemon.exe"
         subprocess.Popen(
             str(daemon),
@@ -30,7 +29,7 @@ def _start_daemon():
 def main():
     run_setup()
     
-    # tenta conectar primeiro
+    # try connect first
     logging.debug("main iniciando")
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -41,9 +40,8 @@ def main():
             return
     except (ConnectionRefusedError, TimeoutError, OSError) as e:
         logging.debug(f"conexão falhou: {e}")
-        # pass
 
-    # daemon não está rodando - sobe uma vez e aguarda
+    # daemon is not running - go up once and wait
     logging.debug("subindo daemon")
     _start_daemon()
     time.sleep(4)
@@ -56,7 +54,6 @@ def main():
             logging.debug("sinal enviado após aguardar daemon")
     except (ConnectionRefusedError, TimeoutError, OSError) as e:
         logging.debug(f"segunda conexão falhou: {e}")
-        # pass
 
 if __name__ == "__main__":
     main()

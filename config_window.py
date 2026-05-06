@@ -5,8 +5,7 @@ from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout,
                                 QFileDialog, QLineEdit, QLabel,
                                 QApplication, QSplitter)
 from PySide6.QtCore import Qt
-
-from config import get_groups, add_group, remove_group, add_shortcut, remove_shortcut
+from config import get_groups, add_group, remove_group, add_shortcut, remove_shortcut, update_shortcut
 
 WINDOW_BG  = "#2b2b2b"
 PANEL_BG   = "#222222"
@@ -24,6 +23,7 @@ class ConfigWindow(QWidget):
         self.setMinimumSize(600, 400)
         self.setStyleSheet(f"background-color: {WINDOW_BG}; color: {TEXT_COLOR};")
         self._selected_group = 0
+        self._editing_shortcut: int | None = None
         self._build_ui()
         self._load_groups()
 
@@ -91,6 +91,7 @@ class ConfigWindow(QWidget):
         self._shortcut_list = QListWidget()
         self._shortcut_list.setStyleSheet(self._list_style())
         layout.addWidget(self._shortcut_list)
+        self._shortcut_list.currentRowChanged.connect(self._on_shortcut_changed)
 
         btn_rem = QPushButton("Remover selecionado")
         btn_rem.clicked.connect(self._remove_shortcut)
@@ -119,10 +120,11 @@ class ConfigWindow(QWidget):
         row.addWidget(btn_browse)
         layout.addLayout(row)
 
-        btn_add = QPushButton("Adicionar atalho")
-        btn_add.clicked.connect(self._add_shortcut)
-        btn_add.setStyleSheet(self._btn_style(BTN_BLUE))
-        layout.addWidget(btn_add)
+        # btn_add = QPushButton("Adicionar atalho")
+        self._btn_add_shortcut = QPushButton("Adicionar atalho")
+        self._btn_add_shortcut.clicked.connect(self._add_shortcut)
+        self._btn_add_shortcut.setStyleSheet(self._btn_style(BTN_BLUE))
+        layout.addWidget(self._btn_add_shortcut)
 
         return panel
 
@@ -178,10 +180,29 @@ class ConfigWindow(QWidget):
         path = self._input_path.text().strip()
         if not name or not path:
             return
-        add_shortcut(self._selected_group, name, path)
+        if self._editing_shortcut is not None:
+            update_shortcut(self._selected_group, self._editing_shortcut, name, path)
+        else:
+            add_shortcut(self._selected_group, name, path)
+        self._clear_shortcut_fields()
+        self._load_shortcuts(self._selected_group)
+
+    def _on_shortcut_changed(self, row: int):
+        self._editing_shortcut = row if row >= 0 else None
+        if self._editing_shortcut is None:
+            self._clear_shortcut_fields()
+            return
+        groups = get_groups()
+        shortcut = groups[self._selected_group]["shortcuts"][row]
+        self._input_name.setText(shortcut["name"])
+        self._input_path.setText(shortcut["path"])
+        self._btn_add_shortcut.setText("Atualizar atalho")
+    
+    def _clear_shortcut_fields(self):
         self._input_name.clear()
         self._input_path.clear()
-        self._load_shortcuts(self._selected_group)
+        self._editing_shortcut = None
+        self._btn_add_shortcut.setText("Adicionar atalho")
 
     def _remove_shortcut(self):
         row = self._shortcut_list.currentRow()

@@ -7,21 +7,31 @@ from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout,
 from PySide6.QtCore import Qt
 from config import get_groups, add_group, remove_group, add_shortcut, remove_shortcut, update_shortcut
 
-WINDOW_BG  = "#2b2b2b"
-PANEL_BG   = "#222222"
-BTN_BLUE   = "#4f8ef7"
-BTN_RED    = "#e06c75"
-BTN_GRAY   = "#555555"
-INPUT_BG   = "#3c3c3c"
-TEXT_COLOR = "#cccccc"
-WHITE      = "#ffffff"
+# ── paleta Gruvbox Dark ───────────────────────────────────────────────────────
+WINDOW_BG    = "#282828"   # bg0
+PANEL_BG     = "#1d2021"   # bg0_hard
+SURFACE      = "#3c3836"   # bg1
+SURFACE_HVR  = "#504945"   # bg2
+SELECTED_BG  = "#504945"   # bg2
+SELECTED_HL  = "#d79921"   # yellow
+
+BTN_PRIMARY  = "#458588"   # aqua/teal
+BTN_WARN     = "#d79921"   # yellow
+BTN_DANGER   = "#cc241d"   # red
+BTN_NEUTRAL  = "#504945"   # bg2
+
+BORDER       = "#504945"   # bg2
+TEXT_PRIMARY = "#ebdbb2"   # fg
+TEXT_MUTED   = "#928374"   # gray
+TEXT_LABEL   = "#a89984"   # fg4
+
 
 class ConfigWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("ExtTaskBar — Configurações")
-        self.setMinimumSize(600, 400)
-        self.setStyleSheet(f"background-color: {WINDOW_BG}; color: {TEXT_COLOR};")
+        self.setMinimumSize(640, 460)
+        self.setStyleSheet(f"background-color: {WINDOW_BG}; color: {TEXT_PRIMARY};")
         self._selected_group = 0
         self._editing_shortcut: int | None = None
         self._build_ui()
@@ -31,104 +41,150 @@ class ConfigWindow(QWidget):
         root = QHBoxLayout()
         root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(0)
-
         root.addWidget(self._build_left_panel())
         root.addWidget(self._build_right_panel())
-
         self.setLayout(root)
 
-    # ── painel esquerdo: grupos ──────────────────────────────────────
+    # ── painel esquerdo: grupos ───────────────────────────────────────────────
 
     def _build_left_panel(self) -> QWidget:
         panel = QWidget()
-        panel.setFixedWidth(180)
-        panel.setStyleSheet(f"background-color: {PANEL_BG};")
+        panel.setFixedWidth(200)
+        panel.setStyleSheet(f"""
+            QWidget {{
+                background-color: {PANEL_BG};
+                border-right: 1px solid {BORDER};
+            }}
+        """)
 
         layout = QVBoxLayout(panel)
-        layout.setContentsMargins(10, 10, 10, 10)
-        layout.setSpacing(6)
+        layout.setContentsMargins(10, 14, 10, 12)
+        layout.setSpacing(4)
 
-        lbl = QLabel("Grupos")
-        lbl.setStyleSheet("font-size: 11px; color: #888888;")
+        lbl = QLabel("GRUPOS")
+        lbl.setStyleSheet(f"font-size: 10px; color: {TEXT_MUTED}; letter-spacing: 1px; border: none;")
         layout.addWidget(lbl)
 
         self._group_list = QListWidget()
-        self._group_list.setStyleSheet(self._list_style())
+        self._group_list.setStyleSheet(self._group_list_style())
         self._group_list.currentRowChanged.connect(self._on_group_changed)
         layout.addWidget(self._group_list)
 
+        layout.addSpacing(6)
+
+        sep = QWidget()
+        sep.setFixedHeight(1)
+        sep.setStyleSheet(f"background: {BORDER}; border: none;")
+        layout.addWidget(sep)
+
+        layout.addSpacing(6)
+
         self._input_group = QLineEdit()
-        self._input_group.setPlaceholderText("Nome do grupo")
+        self._input_group.setPlaceholderText("Nome do grupo...")
         self._input_group.setStyleSheet(self._input_style())
         layout.addWidget(self._input_group)
 
         btn_add = QPushButton("+ Adicionar grupo")
         btn_add.clicked.connect(self._add_group)
-        btn_add.setStyleSheet(self._btn_style(BTN_BLUE))
+        btn_add.setStyleSheet(self._btn_style_outline(BTN_PRIMARY))
         layout.addWidget(btn_add)
 
         btn_rem = QPushButton("Remover grupo")
         btn_rem.clicked.connect(self._remove_group)
-        btn_rem.setStyleSheet(self._btn_style(BTN_RED))
+        btn_rem.setStyleSheet(self._btn_text_danger_style())
         layout.addWidget(btn_rem)
 
         return panel
 
-    # ── painel direito: atalhos do grupo ────────────────────────────
+    # ── painel direito: atalhos ───────────────────────────────────────────────
 
     def _build_right_panel(self) -> QWidget:
         panel = QWidget()
-        panel.setStyleSheet(f"background-color: {WINDOW_BG};")
+        panel.setStyleSheet(f"background-color: {WINDOW_BG}; border: none;")
 
         layout = QVBoxLayout(panel)
-        layout.setContentsMargins(10, 10, 10, 10)
-        layout.setSpacing(6)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
 
-        lbl = QLabel("Atalhos")
-        lbl.setStyleSheet("font-size: 11px; color: #888888;")
-        layout.addWidget(lbl)
+        # header
+        header = QWidget()
+        header.setFixedHeight(46)
+        header.setStyleSheet(f"background: {WINDOW_BG}; border-bottom: 1px solid {BORDER};")
+        header_layout = QVBoxLayout(header)
+        header_layout.setContentsMargins(16, 8, 16, 8)
+        header_layout.setSpacing(1)
 
+        self._lbl_group_title = QLabel("—")
+        self._lbl_group_title.setStyleSheet(f"font-size: 13px; font-weight: 600; color: {TEXT_PRIMARY}; border: none;")
+        header_layout.addWidget(self._lbl_group_title)
+
+        self._lbl_group_count = QLabel("")
+        self._lbl_group_count.setStyleSheet(f"font-size: 11px; color: {TEXT_MUTED}; border: none;")
+        header_layout.addWidget(self._lbl_group_count)
+
+        layout.addWidget(header)
+
+        # lista de atalhos
         self._shortcut_list = QListWidget()
-        self._shortcut_list.setStyleSheet(self._list_style())
-        layout.addWidget(self._shortcut_list)
+        self._shortcut_list.setStyleSheet(self._shortcut_list_style())
         self._shortcut_list.currentRowChanged.connect(self._on_shortcut_changed)
+        layout.addWidget(self._shortcut_list)
 
-        btn_rem = QPushButton("Remover selecionado")
-        btn_rem.clicked.connect(self._remove_shortcut)
-        btn_rem.setStyleSheet(self._btn_style(BTN_RED))
-        layout.addWidget(btn_rem)
+        # rodapé de edição
+        footer = QWidget()
+        footer.setStyleSheet(f"background: {PANEL_BG}; border-top: 1px solid {BORDER};")
+        footer_layout = QVBoxLayout(footer)
+        footer_layout.setContentsMargins(14, 10, 14, 12)
+        footer_layout.setSpacing(8)
 
-        lbl2 = QLabel("Adicionar atalho")
-        lbl2.setStyleSheet("font-size: 11px; color: #888888; margin-top: 6px;")
-        layout.addWidget(lbl2)
+        # label + cancelar
+        label_row = QHBoxLayout()
+        label_row.setSpacing(0)
+        self._lbl_add = QLabel("ADICIONAR ATALHO")
+        self._lbl_add.setStyleSheet(f"font-size: 10px; color: {TEXT_MUTED}; letter-spacing: 1px; border: none;")
+        label_row.addWidget(self._lbl_add)
+        label_row.addStretch()
+        self._btn_cancel = QPushButton("cancelar")
+        self._btn_cancel.setVisible(False)
+        self._btn_cancel.clicked.connect(self._clear_shortcut_fields)
+        self._btn_cancel.setStyleSheet(self._btn_cancel_style())
+        label_row.addWidget(self._btn_cancel)
+        footer_layout.addLayout(label_row)
+
+        # inputs
+        inputs_row = QHBoxLayout()
+        inputs_row.setSpacing(6)
 
         self._input_name = QLineEdit()
         self._input_name.setPlaceholderText("Nome")
+        self._input_name.setFixedWidth(110)
         self._input_name.setStyleSheet(self._input_style())
-        layout.addWidget(self._input_name)
+        inputs_row.addWidget(self._input_name)
 
-        row = QHBoxLayout()
         self._input_path = QLineEdit()
         self._input_path.setPlaceholderText("Caminho do executável")
         self._input_path.setStyleSheet(self._input_style())
-        row.addWidget(self._input_path)
+        inputs_row.addWidget(self._input_path)
 
-        btn_browse = QPushButton("...")
+        btn_browse = QPushButton("󰝰")   # fallback: ícone texto
+        btn_browse.setText("📂")
         btn_browse.setFixedWidth(36)
+        btn_browse.setToolTip("Procurar executável")
         btn_browse.clicked.connect(self._browse)
-        btn_browse.setStyleSheet(self._btn_style(BTN_GRAY))
-        row.addWidget(btn_browse)
-        layout.addLayout(row)
+        btn_browse.setStyleSheet(self._btn_style(BTN_NEUTRAL))
+        inputs_row.addWidget(btn_browse)
 
-        # btn_add = QPushButton("Adicionar atalho")
-        self._btn_add_shortcut = QPushButton("Adicionar atalho")
+        self._btn_add_shortcut = QPushButton("+ Adicionar")
         self._btn_add_shortcut.clicked.connect(self._add_shortcut)
-        self._btn_add_shortcut.setStyleSheet(self._btn_style(BTN_BLUE))
-        layout.addWidget(self._btn_add_shortcut)
+        self._btn_add_shortcut.setStyleSheet(self._btn_style(BTN_PRIMARY))
+        inputs_row.addWidget(self._btn_add_shortcut)
+
+        footer_layout.addLayout(inputs_row)
+        layout.addWidget(footer)
 
         return panel
 
-    # ── dados ────────────────────────────────────────────────────────
+    # ── dados ─────────────────────────────────────────────────────────────────
 
     def _load_groups(self):
         self._group_list.clear()
@@ -141,8 +197,15 @@ class ConfigWindow(QWidget):
         self._shortcut_list.clear()
         groups = get_groups()
         if group_index < 0 or group_index >= len(groups):
+            self._lbl_group_title.setText("—")
+            self._lbl_group_count.setText("")
             return
-        for s in groups[group_index].get("shortcuts", []):
+        group = groups[group_index]
+        shortcuts = group.get("shortcuts", [])
+        self._lbl_group_title.setText(group["name"])
+        n = len(shortcuts)
+        self._lbl_group_count.setText(f"{n} atalho{'s' if n != 1 else ''}")
+        for s in shortcuts:
             self._shortcut_list.addItem(f"{s['name']}  —  {s['path']}")
 
     def _on_group_changed(self, row: int):
@@ -172,8 +235,7 @@ class ConfigWindow(QWidget):
         if path:
             self._input_path.setText(path)
             if not self._input_name.text().strip():
-                name = Path(path).stem
-                self._input_name.setText(name)
+                self._input_name.setText(Path(path).stem)
 
     def _add_shortcut(self):
         name = self._input_name.text().strip()
@@ -196,13 +258,22 @@ class ConfigWindow(QWidget):
         shortcut = groups[self._selected_group]["shortcuts"][row]
         self._input_name.setText(shortcut["name"])
         self._input_path.setText(shortcut["path"])
-        self._btn_add_shortcut.setText("Atualizar atalho")
-    
+        self._btn_add_shortcut.setText("✎ Atualizar")
+        self._btn_add_shortcut.setStyleSheet(self._btn_style_outline(BTN_WARN))
+        self._lbl_add.setText("EDITAR ATALHO")
+        self._lbl_add.setStyleSheet(f"font-size: 10px; color: {BTN_WARN}; letter-spacing: 1px; border: none;")
+        self._btn_cancel.setVisible(True)
+
     def _clear_shortcut_fields(self):
         self._input_name.clear()
         self._input_path.clear()
         self._editing_shortcut = None
-        self._btn_add_shortcut.setText("Adicionar atalho")
+        self._shortcut_list.clearSelection()
+        self._btn_add_shortcut.setText("+ Adicionar")
+        self._btn_add_shortcut.setStyleSheet(self._btn_style(BTN_PRIMARY))
+        self._lbl_add.setText("ADICIONAR ATALHO")
+        self._lbl_add.setStyleSheet(f"font-size: 10px; color: {TEXT_MUTED}; letter-spacing: 1px; border: none;")
+        self._btn_cancel.setVisible(False)
 
     def _remove_shortcut(self):
         row = self._shortcut_list.currentRow()
@@ -211,43 +282,130 @@ class ConfigWindow(QWidget):
         remove_shortcut(self._selected_group, row)
         self._load_shortcuts(self._selected_group)
 
-    # ── estilos ──────────────────────────────────────────────────────
+    # ── estilos ───────────────────────────────────────────────────────────────
 
-    def _list_style(self) -> str:
+    def _group_list_style(self) -> str:
         return f"""
             QListWidget {{
-                background-color: {INPUT_BG};
+                background: transparent;
                 border: none;
-                border-radius: 6px;
-                color: {WHITE};
-                font-size: 12px;
+                outline: none;
+                font-size: 13px;
+                color: {TEXT_PRIMARY};
             }}
-            QListWidget::item {{ padding: 5px; }}
-            QListWidget::item:selected {{ background-color: {BTN_BLUE}; }}
+            QListWidget::item {{
+                padding: 7px 10px;
+                border-radius: 6px;
+                color: {TEXT_LABEL};
+            }}
+            QListWidget::item:hover {{
+                background: {SURFACE_HVR};
+                color: {TEXT_PRIMARY};
+            }}
+            QListWidget::item:selected {{
+                background: {SELECTED_HL}33;
+                color: {SELECTED_HL};
+                font-weight: 600;
+            }}
         """
 
-    def _btn_style(self, bg: str) -> str:
+    def _shortcut_list_style(self) -> str:
         return f"""
-            QPushButton {{
-                background-color: {bg};
-                color: {WHITE};
+            QListWidget {{
+                background: transparent;
                 border: none;
-                border-radius: 6px;
-                padding: 6px;
+                outline: none;
                 font-size: 12px;
+                color: {TEXT_PRIMARY};
+                padding: 6px 8px;
             }}
-            QPushButton:hover {{ background-color: {bg}dd; }}
+            QListWidget::item {{
+                padding: 8px 10px;
+                border-radius: 6px;
+                color: {TEXT_PRIMARY};
+            }}
+            QListWidget::item:hover {{
+                background: {SURFACE_HVR};
+            }}
+            QListWidget::item:selected {{
+                background: {SURFACE};
+                border: 1px solid {BORDER};
+                color: {TEXT_PRIMARY};
+            }}
         """
 
     def _input_style(self) -> str:
         return f"""
             QLineEdit {{
-                background-color: {INPUT_BG};
-                color: {WHITE};
+                background: {SURFACE};
+                color: {TEXT_PRIMARY};
+                border: 1px solid {BORDER};
+                border-radius: 6px;
+                padding: 6px 10px;
+                font-size: 12px;
+            }}
+            QLineEdit:focus {{
+                border-color: {BTN_PRIMARY};
+            }}
+        """
+
+    def _btn_style(self, bg: str) -> str:
+        return f"""
+            QPushButton {{
+                background: {bg};
+                color: #ffffff;
                 border: none;
                 border-radius: 6px;
-                padding: 6px;
+                padding: 6px 12px;
                 font-size: 12px;
+                font-weight: 500;
+            }}
+            QPushButton:hover {{ background: {bg}cc; }}
+            QPushButton:pressed {{ background: {bg}99; }}
+        """
+
+    def _btn_style_outline(self, color: str) -> str:
+        return f"""
+            QPushButton {{
+                background: transparent;
+                color: {color};
+                border: 1px solid {color}66;
+                border-radius: 6px;
+                padding: 6px 12px;
+                font-size: 12px;
+                font-weight: 500;
+            }}
+            QPushButton:hover {{ background: {color}1a; }}
+            QPushButton:pressed {{ background: {color}33; }}
+        """
+
+    def _btn_text_danger_style(self) -> str:
+        return f"""
+            QPushButton {{
+                background: transparent;
+                color: {BTN_DANGER};
+                border: none;
+                border-radius: 6px;
+                padding: 6px 12px;
+                font-size: 12px;
+            }}
+            QPushButton:hover {{ background: {BTN_DANGER}1a; }}
+            QPushButton:pressed {{ background: {BTN_DANGER}33; }}
+        """
+
+    def _btn_cancel_style(self) -> str:
+        return f"""
+            QPushButton {{
+                background: transparent;
+                color: {TEXT_MUTED};
+                border: 1px solid {BORDER};
+                border-radius: 5px;
+                padding: 2px 8px;
+                font-size: 11px;
+            }}
+            QPushButton:hover {{
+                color: {TEXT_PRIMARY};
+                background: {SURFACE};
             }}
         """
 
